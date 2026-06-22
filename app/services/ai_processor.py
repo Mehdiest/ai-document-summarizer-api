@@ -1,41 +1,30 @@
-from openai import OpenAI, RateLimitError, APIError, APITimeoutError
-from app.core.config import settings
-from app.services.fallback_processor import fallback_process
+from app.services.ai_provider import AIProvider
+from app.services.insight_generator import InsightGenerator
 
-client = OpenAI(api_key=settings.OPENAI_API_KEY)
+provider = AIProvider()
+insight_engine = InsightGenerator()
 
 
-def process_text(text: str) -> dict:
+def process_text(extracted_result) -> dict:
     """
-    Hybrid AI processor:
-    - Uses OpenAI if available
-    - Falls back to local processing if any failure occurs
+    Full processing pipeline:
+    - AI summary
+    - fallback summary
+    - structured insights
     """
 
-    try:
-        response = client.chat.completions.create(
-            model="gpt-4o-mini",
-            messages=[
-                {
-                    "role": "system",
-                    "content": "Return ONLY JSON with summary and key_points."
-                },
-                {
-                    "role": "user",
-                    "content": text
-                }
-            ],
-            timeout=10
-        )
+    if isinstance(extracted_result, dict):
+        text = extracted_result.get("text", "")
+    else:
+        text = extracted_result
 
-        content = response.choices[0].message.content
+    ai_result = provider.summarize(text)
+    insights = insight_engine.generate(text)
 
-        return {
-            "summary": content,
-            "key_points": [],
-            "mode": "ai"
-        }
-
-    except (RateLimitError, APIError, APITimeoutError, Exception):
-        # fallback mode
-        return fallback_process(text)
+    return {
+        "summary": ai_result["summary"],
+        "mode": ai_result["mode"],
+        "key_points": insights["key_points"],
+        "keywords": insights["keywords"],
+        "insight": insights["insight"]
+    }

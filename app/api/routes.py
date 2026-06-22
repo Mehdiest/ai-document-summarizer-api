@@ -1,5 +1,6 @@
 from fastapi import APIRouter, UploadFile, File
-from app.services.file_loader import save_file
+import shutil
+
 from app.services.text_extractor import extract_text
 from app.services.ai_processor import process_text
 
@@ -8,20 +9,28 @@ router = APIRouter()
 
 @router.post("/upload-document")
 async def upload_document(file: UploadFile = File(...)):
-    file_path = await save_file(file)
 
-    text = extract_text(file_path)
+    file_path = f"temp_{file.filename}"
 
-    ai_result = process_text(text)
+    with open(file_path, "wb") as buffer:
+        shutil.copyfileobj(file.file, buffer)
+
+    extracted = extract_text(file_path)
+
+    # اگر خطا در استخراج
+    if isinstance(extracted, dict) and "error" in extracted:
+        return {
+            "status": "error",
+            "data": extracted
+        }
+
+    result = process_text(extracted)
 
     return {
-        "summary": ai_result.get("summary", ""),
-        "key_points": ai_result.get("key_points", []),
-        "raw_text_length": len(text),
-        "mode": ai_result.get("mode", "ai")
+        "status": "success",
+        "data": result,
+        "meta": {
+            "length": len(extracted.get("text", "")),
+            "file_type": file.filename.split(".")[-1]
+        }
     }
-
-
-@router.get("/")
-def root():
-    return {"status": "running"}

@@ -1,51 +1,30 @@
-\## 🚀 Overview
+# AI Document Intelligence Engine
 
-
-
-A \*\*production-style AI-powered document processing system\*\* built with FastAPI.
-
-
-
-It extracts, analyzes, and summarizes documents using:
-
-\- OpenAI (AI Mode)
-
-\- Local fallback engine (Offline Mode)
-
-
-> ⚡ Designed to NEVER fail — even without AI availability.
-
-\---
-
-\## 🧠 Architecture
+AI-powered document processing system for extracting insights, summaries, and structured data from PDF, DOCX, and text documents.
 
 ---
 
-## ✨ Key Features
+## 🚀 Features
 
-- 📄 PDF & TXT document upload
-- 🔍 Automatic text extraction (PyMuPDF)
-- 🤖 AI-powered summarization (OpenAI)
-- 🔁 Hybrid fallback system (no downtime)
-- ⚡ FastAPI async backend
-- 🧩 Clean modular architecture
-- 🛡️ Production-safe error handling
-
----
-
-## 🧠 Hybrid AI Strategy
-
-| Mode | Description |
-|------|------------|
-| AI Mode | Uses OpenAI for high-quality summaries |
-| Fallback Mode | Local processing when AI is unavailable |
+- 📄 PDF / DOCX / TXT support
+- 🧠 AI-powered summarization
+- 🔑 Key points extraction
+- 🧾 Keyword detection
+- 📊 Structured insights (word count, complexity)
+- 🔄 Fallback engine (no API required)
+- ⚡ FastAPI backend (production-ready)
 
 ---
 
-## 📡 API Endpoints
+## 🧠 Architecture
 
-### Root
+User → FastAPI → Document Extractor → AI Processor → Structured Output
 
+---
 
+## 📦 API Endpoint
 
-"# ai-document-intelligence-system" 
+### Upload Document
+
+```http
+POST /upload-document
