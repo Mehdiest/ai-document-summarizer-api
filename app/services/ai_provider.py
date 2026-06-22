@@ -3,8 +3,7 @@ import os
 
 class AIProvider:
     """
-    Safe AI layer with fallback support.
-    Works with or without API key.
+    Unified AI layer (OpenAI + fallback)
     """
 
     def __init__(self):
@@ -12,7 +11,6 @@ class AIProvider:
         self.enabled = bool(self.api_key)
 
     def summarize(self, text: str) -> dict:
-        # Safety: always ensure string input
         if not isinstance(text, str):
             text = str(text)
 
@@ -22,10 +20,10 @@ class AIProvider:
                 "mode": "empty"
             }
 
-        if not self.enabled:
-            return self._fallback_summary(text)
+        if self.enabled:
+            return self._openai_summary(text)
 
-        return self._openai_summary(text)
+        return self._fallback_summary(text)
 
     def _openai_summary(self, text: str) -> dict:
         from openai import OpenAI
@@ -37,7 +35,7 @@ class AIProvider:
             messages=[
                 {
                     "role": "user",
-                    "content": f"Summarize this document clearly:\n\n{text}"
+                    "content": f"Summarize this document:\n\n{text}"
                 }
             ]
         )
@@ -48,13 +46,16 @@ class AIProvider:
         }
 
     def _fallback_summary(self, text: str) -> dict:
-        # Ensure safe string handling
         text = str(text)
 
         sentences = text.split(".")
-        first_sentence = sentences[0].strip() if sentences and sentences[0] else text[:200]
+        first = sentences[0].strip() if sentences and sentences[0] else text[:200]
 
         return {
-            "summary": first_sentence,
+            "summary": first,
             "mode": "fallback"
         }
+
+
+# Global instance (important for routes)
+ai_provider = AIProvider()

@@ -14,3 +14,8 @@ openai==1.40.0
 # OCR (only if version 2 supports images/scans)
 pytesseract==0.3.10
 Pillow==10.3.0
+
+sentence-transformers==3.0.1
+faiss-cpu==1.8.0
+numpy>=1.24
+tqdm

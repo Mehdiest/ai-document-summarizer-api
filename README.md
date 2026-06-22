@@ -1,30 +1,34 @@
-# AI Document Intelligence Engine
+# AI Document Intelligence System (RAG + Semantic Search)
 
-AI-powered document processing system for extracting insights, summaries, and structured data from PDF, DOCX, and text documents.
+A production-style AI system for uploading documents, extracting text, and performing semantic search and question answering using Retrieval-Augmented Generation (RAG).
 
 ---
 
 ## 🚀 Features
 
-- 📄 PDF / DOCX / TXT support
-- 🧠 AI-powered summarization
-- 🔑 Key points extraction
-- 🧾 Keyword detection
-- 📊 Structured insights (word count, complexity)
-- 🔄 Fallback engine (no API required)
-- ⚡ FastAPI backend (production-ready)
+- 📄 Multi-format document support (PDF, DOCX, TXT, Images)
+- 🔍 Text extraction (OCR + parser-based)
+- 🧠 Semantic search using FAISS + Sentence Transformers
+- 💬 Question answering over documents (RAG-based)
+- 🧩 Chunking + embedding pipeline
+- 🧠 AI fallback summarization (works without API key)
+- ⚡ FastAPI backend (production-ready structure)
 
 ---
 
-## 🧠 Architecture
+## 🏗️ Architecture
 
-User → FastAPI → Document Extractor → AI Processor → Structured Output
+Upload File
+↓
+Text Extraction
+↓
+Chunking
+↓
+Embedding (SentenceTransformer)
+↓
+Vector Store (FAISS)
+↓
+Semantic Search
+↓
+Answer Generation (RAG)
 
----
-
-## 📦 API Endpoint
-
-### Upload Document
-
-```http
-POST /upload-document

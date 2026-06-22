@@ -1,73 +1,64 @@
-from fastapi import APIRouter, UploadFile, File
-from pydantic import BaseModel
+from fastapi import APIRouter, UploadFile, File, HTTPException
 import shutil
 import os
 
 from app.services.text_extractor import extract_text
-from app.services.ai_processor import process_text
-from app.services.rag_service import store_document, answer_question
+from app.services.ai_provider import AIProvider
+from app.services.rag_engine import RAGEngine
 
 router = APIRouter()
 
+ai = AIProvider()
+rag = RAGEngine()
 
-class QuestionRequest(BaseModel):
-    question: str
-
-
-@router.get("/")
-async def root():
-    return {
-        "status": "running"
-    }
+UPLOAD_DIR = "temp"
+os.makedirs(UPLOAD_DIR, exist_ok=True)
 
 
 @router.post("/upload-document")
 async def upload_document(file: UploadFile = File(...)):
+    file_path = os.path.join(UPLOAD_DIR, file.filename)
 
-    file_path = f"temp_{file.filename}"
+    with open(file_path, "wb") as buffer:
+        shutil.copyfileobj(file.file, buffer)
 
-    try:
-        # Save uploaded file
-        with open(file_path, "wb") as buffer:
-            shutil.copyfileobj(file.file, buffer)
+    extracted = extract_text(file_path)
 
-        # Extract text
-        extracted = extract_text(file_path)
+    if "error" in extracted:
+        return {"status": "error", "detail": extracted}
 
-        # Error handling
-        if isinstance(extracted, dict) and "error" in extracted:
-            return {
-                "status": "error",
-                "data": extracted
-            }
+    text = extracted["text"]
 
-        # Store document for RAG
-        store_document(extracted["text"])
+    summary = ai.summarize(text)
 
-        # Generate summary / keywords / insights
-        result = process_text(extracted)
-
-        return {
-            "status": "success",
-            "data": result,
-            "meta": {
-                "length": len(extracted["text"]),
-                "file_type": file.filename.split(".")[-1].lower()
-            }
-        }
-
-    finally:
-        # Cleanup temp file
-        if os.path.exists(file_path):
-            os.remove(file_path)
-
-
-@router.post("/ask")
-async def ask_document(payload: QuestionRequest):
-
-    result = answer_question(payload.question)
+    rag.index(text)
 
     return {
         "status": "success",
-        "data": result
+        "data": {
+            "summary": summary["summary"],
+            "mode": summary["mode"]
+        },
+        "meta": {
+            "length": len(text),
+            "file_type": file.filename.split(".")[-1]
+        }
+    }
+
+
+@router.post("/ask")
+async def ask(question: str):
+    results = rag.search(question)
+
+    if not results:
+        raise HTTPException(status_code=400, detail="No document indexed")
+
+    answer = ai.summarize(" ".join(results))
+
+    return {
+        "status": "success",
+        "data": {
+            "answer": answer["summary"],
+            "chunks": results
+        }
     }
